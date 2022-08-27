@@ -1,2 +1,2 @@
-# capitals
-Rust cli quiz about countries built with help of [REST countries api](https://restcountries.com)
+# Capitals
+Command line quiz on countries and capitals using [restcountries api](https://restcountries.com)
