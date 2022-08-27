@@ -1,4 +1,4 @@
-use std::{fmt::format, io};
+use std::{io};
 use std::io::Write;
 use hyper::{Client, Response, Body};
 use hyper_tls::HttpsConnector;
@@ -21,35 +21,47 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let response_content_json = body_to_string(resp).await;
 
     println!("Parsing response..");
-    let parsed = json::parse(&response_content_json).unwrap();
-        
-    println!("Ready to go.");
+    let data = json::parse(&response_content_json).unwrap();
+    println!("Ready to go");
+
+    play(&data);
+    
+    Ok(())
+}
+
+fn play(data: &JsonValue) {
+
     print!("Enter number of countries to guess: ");
     io::stdout().flush().unwrap();
     let choice : i32;
     scan!("{}",choice);
-    guess(choice, &parsed);
-    Ok(())
+    play_guess(choice, &data);
 }
-
-fn guess(n : i32,parsed: &JsonValue) {
+fn guess(data: &JsonValue) -> (bool,String) {
+    let current_country_index = thread_rng().gen_range(0..249);
+        
+    let current_country = &data[current_country_index];
+    let name = &current_country["name"]["common"];
+    let capital = &current_country["capital"][0];
+    print!("{} -> ",name);
+    io::stdout().flush().unwrap();
+    let input: String;
+    scan!("{}",input);
+    if input.as_str() == capital {
+        (true,"".to_string())
+    } else {
+        (false,capital.to_string())
+    }
+}
+fn play_guess(n : i32,data: &JsonValue) {
     let mut number_of_guessed_right = 0;
     for _ in 0..n {
-        
-        let current_country_index = thread_rng().gen_range(0..249);
-        
-        let current_country = &parsed[current_country_index];
-        let name = &current_country["name"]["common"];
-        let capital = &current_country["capital"][0];
-        print!("{} -> ",name);
-        io::stdout().flush().unwrap();
-        let input: String;
-        scan!("{}",input);
-        if input.as_str() == capital {
-            println!("Correct");
+        let result = guess(&data);
+        if result.0 {
+            println!("Correct!");
             number_of_guessed_right += 1;
         } else {
-            println!("Incorrect ({})",capital);
+            println!("Incorrect! ({})",result.1);
         }
     }
     println!("You guessed {}/{} right",number_of_guessed_right,n);
